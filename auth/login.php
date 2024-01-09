@@ -9,26 +9,40 @@ if (isset($_SESSION['username'])) {
 
 
 if (isset($_POST['submit'])) {
-    if (empty($_POST['username']) || empty($_POST['email']) || empty($_POST['password'])) {
+    if (empty($_POST['email']) || empty($_POST['password'])) {
         echo "<script>alert('One or more inputs are empty'); </script>";
     } else {
-        $username = $_POST['username'];
         $email = $_POST['email'];
-        $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+        $password = $_POST['password'];
 
-        $item = $conn->prepare("INSERT INTO users (username, email, mypassword) VALUES (:username, :email, :mypassword)");
+        $qeury = $conn->query("SELECT * FROM users WHERE email='" . $email . "'");
 
-        $item->execute([
-          ":username" => $username,
-          ":email" => $email,
-          ":mypassword" => $password,
-        ]);
+        $qeury->execute();
+
+        $user = $qeury->fetch(PDO::FETCH_ASSOC);
+
+        if ($qeury->rowCount() > 0) {
+
+            if (password_verify($password, $user['mypassword'])) {
+                $_SESSION['id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email'] = $user['email'];
+
+                header('location: ' . APP_URL . '/');
+            } else {
+                echo "<script>alert('Email or Password is incorrect'); </script>";
+            }
+        } else {
+            echo "<script>alert('Email or Password is incorrect'); </script>";
+        }
 
         header('location: login.php');
     }
 }
 
+
 ?>
+
 
     <div class="hero-wrap js-fullheight" style="background-image: url('<?php echo APP_URL; ?>/images/image_2.jpg');" data-stellar-background-ratio="0.5">
       <div class="overlay"></div>
@@ -47,22 +61,18 @@ if (isset($_POST['submit'])) {
     	<div class="container">
 	    	<div class="row justify-content-middle" style="margin-left: 397px;">
 	    		<div class="col-md-6 mt-5">
-						<form action="register.php" method="POST" class="appointment-form" style="margin-top: -568px;">
-							<h3 class="mb-3">Register</h3>
+						<form action="login.php" method="POST" class="appointment-form" style="margin-top: -568px;">
+							<h3 class="mb-3">Login</h3>
 							<div class="row">
 								<div class="col-md-12">
 									<div class="form-group">
-			    					    <input type="text" class="form-control" placeholder="Username" name="username" required>
+			    					    <input name="email" type="email" class="form-control" placeholder="Email">
 			    				    </div>
 								</div>
+
                                 <div class="col-md-12">
 									<div class="form-group">
-			    					    <input type="email" class="form-control" placeholder="Email" name="email" required>
-			    				    </div>
-								</div>
-                                <div class="col-md-12">
-									<div class="form-group">
-			    					    <input type="password" class="form-control" placeholder="Password" name="password" required>
+			    					    <input name="password" type="password" class="form-control" placeholder="Password">
 			    				    </div>
 								</div>
 
@@ -70,7 +80,7 @@ if (isset($_POST['submit'])) {
 
 								<div class="col-md-12">
                                     <div class="form-group">
-                                        <input type="submit" name="submit" value="Register" class="btn btn-primary py-3 px-4">
+                                        <input type="submit" name="submit" value="Login" class="btn btn-primary py-3 px-4">
                                     </div>
 								</div>
 							</div>
@@ -80,4 +90,4 @@ if (isset($_POST['submit'])) {
 	    </div>
     </section>
 
-<?php require_once('../includes/footer.php'); ?>
+ <?php require_once('../includes/footer.php'); ?>
